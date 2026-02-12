@@ -1,6 +1,6 @@
 <div align="center">
 
-# sc
+# 🧱 sc
 
 **Block distracting websites by default. Temporarily unblock with timers.**
 
