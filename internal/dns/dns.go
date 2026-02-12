@@ -3,8 +3,10 @@ package dns
 import "os/exec"
 
 func Flush() error {
-	if err := exec.Command("dscacheutil", "-flushcache").Run(); err != nil {
-		return err
-	}
-	return exec.Command("killall", "-HUP", "mDNSResponder").Run()
+	// OS-level DNS cache — covers different macOS versions
+	exec.Command("dscacheutil", "-flushcache").Run()
+	exec.Command("killall", "-HUP", "mDNSResponder").Run()
+	exec.Command("killall", "mDNSResponderHelper").Run()
+
+	return nil
 }
