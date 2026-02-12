@@ -13,10 +13,9 @@ import (
 )
 
 var unblockCmd = &cobra.Command{
-	Use:   "unblock <domain...> [duration]",
-	Short: "Temporarily unblock domains",
-	Long:  "Temporarily unblock one or more domains. Last argument is parsed as duration (e.g. 15m, 1h). If omitted, uses default_duration from config.",
-	Args:  cobra.MinimumNArgs(1),
+	Use:   "unblock [domain...] [duration]",
+	Short: "Temporarily unblock domains (all if none specified)",
+	Long:  "Temporarily unblock one or more domains. No args unblocks all. Last argument is parsed as duration (e.g. 15m, 1h). If omitted, uses default_duration from config.",
 	RunE:  runUnblock,
 }
 
@@ -29,15 +28,13 @@ func runUnblock(cmd *cobra.Command, args []string) error {
 	var duration string
 
 	// Try parsing last arg as duration
-	if len(args) > 1 {
+	if len(args) > 0 {
 		if _, err := time.ParseDuration(args[len(args)-1]); err == nil {
 			duration = args[len(args)-1]
 			domains = args[:len(args)-1]
 		} else {
 			domains = args
 		}
-	} else {
-		domains = args
 	}
 
 	if duration == "" {

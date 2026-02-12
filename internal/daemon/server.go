@@ -113,16 +113,6 @@ func (s *Server) handleStatus() ipc.Response {
 }
 
 func (s *Server) handleUnblock(req ipc.Request) ipc.Response {
-	domainsStr := req.Args["domains"]
-	if domainsStr == "" {
-		return ipc.Response{Error: "domains required"}
-	}
-
-	domains := strings.Split(domainsStr, ",")
-	for i := range domains {
-		domains[i] = strings.TrimSpace(domains[i])
-	}
-
 	durationStr := req.Args["duration"]
 	if durationStr == "" {
 		return ipc.Response{Error: "duration required"}
@@ -133,11 +123,19 @@ func (s *Server) handleUnblock(req ipc.Request) ipc.Response {
 		return ipc.Response{Error: fmt.Sprintf("invalid duration: %s", durationStr)}
 	}
 
-	// Validate domains exist in config
-	for _, d := range domains {
-		if !s.daemon.cfg.HasDomain(d) {
-			return ipc.Response{Error: fmt.Sprintf("domain %q not in block list", d)}
+	var domains []string
+	if domainsStr := req.Args["domains"]; domainsStr != "" {
+		domains = strings.Split(domainsStr, ",")
+		for i := range domains {
+			domains[i] = strings.TrimSpace(domains[i])
 		}
+		for _, d := range domains {
+			if !s.daemon.cfg.HasDomain(d) {
+				return ipc.Response{Error: fmt.Sprintf("domain %q not in block list", d)}
+			}
+		}
+	} else {
+		domains = s.daemon.cfg.Domains
 	}
 
 	data := s.daemon.Unblock(domains, dur)
