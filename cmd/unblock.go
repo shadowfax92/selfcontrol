@@ -61,21 +61,25 @@ func runUnblock(cmd *cobra.Command, args []string) error {
 		}
 	}
 
-	// Show warnings and confirm
+	// Step through each warning, require confirmation for each
 	if !skipConfirm && len(cfg.Settings.UnblockWarnings) > 0 {
+		reader := bufio.NewReader(os.Stdin)
 		fmt.Println()
 		for _, w := range cfg.Settings.UnblockWarnings {
-			fmt.Printf("  ⚠ %s\n", w)
+			fmt.Printf("  %s [y/N] ", w)
+			answer, _ := reader.ReadString('\n')
+			answer = strings.TrimSpace(strings.ToLower(answer))
+			if answer != "y" && answer != "yes" {
+				fmt.Println("Cancelled.")
+				return nil
+			}
 		}
-		fmt.Println()
 
 		target := "all domains"
 		if len(domains) > 0 {
 			target = strings.Join(domains, ", ")
 		}
-		fmt.Printf("Unblock %s for %s? [y/N] ", target, duration)
-
-		reader := bufio.NewReader(os.Stdin)
+		fmt.Printf("\n  Unblock %s for %s? [y/N] ", target, duration)
 		answer, _ := reader.ReadString('\n')
 		answer = strings.TrimSpace(strings.ToLower(answer))
 		if answer != "y" && answer != "yes" {
