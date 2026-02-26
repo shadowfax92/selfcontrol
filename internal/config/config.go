@@ -25,10 +25,12 @@ func (d Duration) MarshalText() ([]byte, error) {
 }
 
 type Settings struct {
-	DefaultDuration Duration `yaml:"default_duration"`
-	CheckInterval   Duration `yaml:"check_interval"`
-	FlushDNS        bool     `yaml:"flush_dns"`
-	BlockSubdomains bool     `yaml:"block_subdomains"`
+	DefaultDuration    Duration `yaml:"default_duration"`
+	MaxUnblockDuration Duration `yaml:"max_unblock_duration,omitempty"`
+	CheckInterval      Duration `yaml:"check_interval"`
+	FlushDNS           bool     `yaml:"flush_dns"`
+	BlockSubdomains    bool     `yaml:"block_subdomains"`
+	UnblockWarnings    []string `yaml:"unblock_warnings,omitempty"`
 }
 
 type Config struct {
@@ -44,6 +46,10 @@ func Default() *Config {
 			CheckInterval:   Duration{5 * time.Second},
 			FlushDNS:        true,
 			BlockSubdomains: true,
+			UnblockWarnings: []string{
+				"You're about to unblock distracting sites.",
+				"Consider whether this is truly necessary right now.",
+			},
 		},
 	}
 }

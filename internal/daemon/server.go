@@ -123,6 +123,10 @@ func (s *Server) handleUnblock(req ipc.Request) ipc.Response {
 		return ipc.Response{Error: fmt.Sprintf("invalid duration: %s", durationStr)}
 	}
 
+	if max := s.daemon.cfg.Settings.MaxUnblockDuration.Duration; max > 0 && dur > max {
+		dur = max
+	}
+
 	var domains []string
 	if domainsStr := req.Args["domains"]; domainsStr != "" {
 		domains = strings.Split(domainsStr, ",")

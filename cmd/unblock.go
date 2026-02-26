@@ -1,8 +1,10 @@
 package cmd
 
 import (
+	"bufio"
 	"encoding/json"
 	"fmt"
+	"os"
 	"strings"
 	"time"
 
@@ -12,6 +14,8 @@ import (
 	"github.com/spf13/cobra"
 )
 
+var skipConfirm bool
+
 var unblockCmd = &cobra.Command{
 	Use:   "unblock [domain...] [duration]",
 	Short: "Temporarily unblock domains (all if none specified)",
@@ -20,6 +24,7 @@ var unblockCmd = &cobra.Command{
 }
 
 func init() {
+	unblockCmd.Flags().BoolVarP(&skipConfirm, "yes", "y", false, "Skip confirmation prompt")
 	rootCmd.AddCommand(unblockCmd)
 }
 
@@ -37,12 +42,45 @@ func runUnblock(cmd *cobra.Command, args []string) error {
 		}
 	}
 
+	cfg, err := config.Load(config.ConfigPath())
+	if err != nil {
+		cfg = config.Default()
+	}
+
 	if duration == "" {
-		cfg, err := config.Load(config.ConfigPath())
-		if err == nil {
-			duration = cfg.Settings.DefaultDuration.Duration.String()
-		} else {
-			duration = "15m"
+		duration = cfg.Settings.DefaultDuration.Duration.String()
+	}
+
+	// Enforce max unblock duration
+	if cfg.Settings.MaxUnblockDuration.Duration > 0 {
+		dur, _ := time.ParseDuration(duration)
+		if dur > cfg.Settings.MaxUnblockDuration.Duration {
+			fmt.Printf("Requested duration %s exceeds max allowed %s, capping.\n",
+				duration, cfg.Settings.MaxUnblockDuration.Duration)
+			duration = cfg.Settings.MaxUnblockDuration.Duration.String()
+		}
+	}
+
+	// Show warnings and confirm
+	if !skipConfirm && len(cfg.Settings.UnblockWarnings) > 0 {
+		fmt.Println()
+		for _, w := range cfg.Settings.UnblockWarnings {
+			fmt.Printf("  ⚠ %s\n", w)
+		}
+		fmt.Println()
+
+		target := "all domains"
+		if len(domains) > 0 {
+			target = strings.Join(domains, ", ")
+		}
+		fmt.Printf("Unblock %s for %s? [y/N] ", target, duration)
+
+		reader := bufio.NewReader(os.Stdin)
+		answer, _ := reader.ReadString('\n')
+		answer = strings.TrimSpace(strings.ToLower(answer))
+		if answer != "y" && answer != "yes" {
+			fmt.Println("Cancelled.")
+			return nil
 		}
 	}
 
