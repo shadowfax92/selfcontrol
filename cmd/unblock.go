@@ -65,7 +65,10 @@ func runUnblock(cmd *cobra.Command, args []string) error {
 	if !skipConfirm && len(cfg.Settings.UnblockWarnings) > 0 {
 		reader := bufio.NewReader(os.Stdin)
 		fmt.Println()
-		for _, w := range cfg.Settings.UnblockWarnings {
+		for i, w := range cfg.Settings.UnblockWarnings {
+			if i > 0 {
+				forceWait(30 * time.Second)
+			}
 			fmt.Printf("  %s [y/N] ", w)
 			answer, _ := reader.ReadString('\n')
 			answer = strings.TrimSpace(strings.ToLower(answer))
@@ -74,6 +77,7 @@ func runUnblock(cmd *cobra.Command, args []string) error {
 				return nil
 			}
 		}
+		forceWait(30 * time.Second)
 
 		target := "all domains"
 		if len(domains) > 0 {
@@ -111,4 +115,18 @@ func runUnblock(cmd *cobra.Command, args []string) error {
 		fmt.Printf("Unblocked %s for %s\n", d, data.Duration)
 	}
 	return nil
+}
+
+func forceWait(d time.Duration) {
+	deadline := time.Now().Add(d)
+	for {
+		remaining := time.Until(deadline)
+		if remaining <= 0 {
+			break
+		}
+		secs := int(remaining.Round(time.Second).Seconds())
+		fmt.Printf("\r  Cooling off... %ds remaining ", secs)
+		time.Sleep(time.Second)
+	}
+	fmt.Print("\r\033[K")
 }
