@@ -5,10 +5,13 @@ import (
 	"fmt"
 	"strings"
 
+	"sc/internal/config"
 	"sc/internal/ipc"
 
 	"github.com/spf13/cobra"
 )
+
+var removeYes bool
 
 var removeCmd = &cobra.Command{
 	Use:   "remove <domain...>",
@@ -18,10 +21,20 @@ var removeCmd = &cobra.Command{
 }
 
 func init() {
+	removeCmd.Flags().BoolVarP(&removeYes, "yes", "y", false, "Skip confirmation prompt")
 	rootCmd.AddCommand(removeCmd)
 }
 
 func runRemove(cmd *cobra.Command, args []string) error {
+	cfg, err := config.Load(config.ConfigPath())
+	if err != nil {
+		cfg = config.Default()
+	}
+	prompt := fmt.Sprintf("Remove %s from the block list permanently?", strings.Join(args, ", "))
+	if !confirmWeakening(cfg, removeYes, prompt) {
+		return nil
+	}
+
 	client := newClient()
 	resp, err := client.Send(ipc.Request{
 		Command: ipc.CmdRemove,

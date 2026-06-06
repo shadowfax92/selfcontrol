@@ -24,9 +24,12 @@ func (d Duration) MarshalText() ([]byte, error) {
 	return []byte(d.Duration.String()), nil
 }
 
+const DefaultDemoDuration = 5 * time.Minute
+
 type Settings struct {
 	DefaultDuration    Duration `yaml:"default_duration"`
 	MaxUnblockDuration Duration `yaml:"max_unblock_duration,omitempty"`
+	DemoDuration       Duration `yaml:"demo_duration,omitempty"`
 	CheckInterval      Duration `yaml:"check_interval"`
 	FlushDNS           bool     `yaml:"flush_dns"`
 	BlockSubdomains    bool     `yaml:"block_subdomains"`
@@ -43,6 +46,7 @@ func Default() *Config {
 		Domains: []string{},
 		Settings: Settings{
 			DefaultDuration: Duration{15 * time.Minute},
+			DemoDuration:    Duration{DefaultDemoDuration},
 			CheckInterval:   Duration{5 * time.Second},
 			FlushDNS:        true,
 			BlockSubdomains: true,
