@@ -15,6 +15,7 @@ var demoCmd = &cobra.Command{
 	Use:   "demo",
 	Short: "Unblock all sites for a short window with no confirmation (for quick demos)",
 	Long:  "Demo mode immediately unblocks every configured domain for demo_duration (default 5m) with no warnings or cooldown, then they auto-reblock. Intended for quick demos.",
+	Args:  cobra.NoArgs,
 	RunE:  runDemo,
 }
 
