@@ -13,6 +13,8 @@ A root daemon manages `/etc/hosts`, blocking configured domains with both IPv4 a
 - **Default-blocked** — domains are blocked at all times unless explicitly unblocked
 - **Timed unblocks** — `sc unblock reddit.com 15m` gives you 15 minutes, then reblocks
 - **Instant reblock** — changed your mind? `sc reblock` puts the wall back up
+- **Demo mode** — `sc demo` unblocks everything for 5 minutes with no prompts, for quick demos
+- **Hard to remove** — `sc remove` makes you sit through the same cooldown as unblock, so you can't casually delete a block
 - **Usage tracking** — `sc logs` shows how often you unblock and for how long
 
 ---
@@ -58,6 +60,7 @@ domains:
 
 settings:
   default_duration: 15m
+  demo_duration: 5m
   check_interval: 5s
   flush_dns: true
   block_subdomains: true
@@ -67,16 +70,19 @@ settings:
 
 **`default_duration`** — how long `sc unblock` lasts when no duration is specified.
 
+**`demo_duration`** — how long `sc demo` unblocks everything for. Default 5m.
+
 ## CLI
 
 ```sh
 sc status                     # show all domains and their state
 sc unblock reddit.com 15m     # unblock for 15 minutes
 sc unblock reddit.com x.com   # unblock multiple (uses default_duration)
+sc demo                       # unblock everything for 5m, no prompts (quick demos)
 sc reblock                    # reblock everything immediately
 sc reblock reddit.com         # reblock specific domain
 sc add youtube.com            # add domain to block list
-sc remove youtube.com         # remove domain from block list
+sc remove youtube.com         # remove from block list (confirms first; -y to skip)
 sc list                       # list all configured domains
 sc logs                       # show unblock history and stats
 sc logs --domain reddit.com   # filter logs by domain
