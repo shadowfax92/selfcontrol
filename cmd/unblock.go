@@ -1,10 +1,8 @@
 package cmd
 
 import (
-	"bufio"
 	"encoding/json"
 	"fmt"
-	"os"
 	"strings"
 	"time"
 
@@ -61,35 +59,12 @@ func runUnblock(cmd *cobra.Command, args []string) error {
 		}
 	}
 
-	// Step through each warning, require confirmation for each
-	if !skipConfirm && len(cfg.Settings.UnblockWarnings) > 0 {
-		reader := bufio.NewReader(os.Stdin)
-		fmt.Println()
-		for i, w := range cfg.Settings.UnblockWarnings {
-			if i > 0 {
-				forceWait(30 * time.Second)
-			}
-			fmt.Printf("  %s [y/N] ", w)
-			answer, _ := reader.ReadString('\n')
-			answer = strings.TrimSpace(strings.ToLower(answer))
-			if answer != "y" && answer != "yes" {
-				fmt.Println("Cancelled.")
-				return nil
-			}
-		}
-		forceWait(30 * time.Second)
-
-		target := "all domains"
-		if len(domains) > 0 {
-			target = strings.Join(domains, ", ")
-		}
-		fmt.Printf("\n  Unblock %s for %s? [y/N] ", target, duration)
-		answer, _ := reader.ReadString('\n')
-		answer = strings.TrimSpace(strings.ToLower(answer))
-		if answer != "y" && answer != "yes" {
-			fmt.Println("Cancelled.")
-			return nil
-		}
+	target := "all domains"
+	if len(domains) > 0 {
+		target = strings.Join(domains, ", ")
+	}
+	if !confirmWeakening(cfg, skipConfirm, fmt.Sprintf("Unblock %s for %s?", target, duration)) {
+		return nil
 	}
 
 	client := newClient()
@@ -115,18 +90,4 @@ func runUnblock(cmd *cobra.Command, args []string) error {
 		fmt.Printf("Unblocked %s for %s\n", d, data.Duration)
 	}
 	return nil
-}
-
-func forceWait(d time.Duration) {
-	deadline := time.Now().Add(d)
-	for {
-		remaining := time.Until(deadline)
-		if remaining <= 0 {
-			break
-		}
-		secs := int(remaining.Round(time.Second).Seconds())
-		fmt.Printf("\r  Cooling off... %ds remaining ", secs)
-		time.Sleep(time.Second)
-	}
-	fmt.Print("\r\033[K")
 }
